@@ -30,16 +30,57 @@ class Portfolio:
         self.assets[cryptocurrency.symbol] -= amount
 
 def get_crypto_prices():
-    url = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd"
+    url = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,binancecoin,tether,ripple,cardano,solana,polkadot,dogecoin,litecoin,chainlink,usd-coin,stellar,vechain,theta-token,eos,bitcoin-cash,tron,iota,wrapped-bitcoin&vs_currencies=usd"
     response = requests.get(url)
     if response.status_code == 200:
         data = response.json()
         bitcoin_price = data["bitcoin"]["usd"]
         ethereum_price = data["ethereum"]["usd"]
-        return {"BTC": bitcoin_price, "ETH": ethereum_price}
+        binancecoin_price = data["binancecoin"]["usd"]
+        tether_price = data["tether"]["usd"]
+        ripple_price = data["ripple"]["usd"]
+        cardano_price = data["cardano"]["usd"]
+        solana_price = data["solana"]["usd"]
+        polkadot_price = data["polkadot"]["usd"]
+        dogecoin_price = data["dogecoin"]["usd"]
+        litecoin_price = data["litecoin"]["usd"]
+        chainlink_price = data["chainlink"]["usd"]
+        usd_coin_price = data["usd-coin"]["usd"]
+        stellar_price = data["stellar"]["usd"]
+        vechain_price = data["vechain"]["usd"]
+        theta_token_price = data["theta-token"]["usd"]
+        eos_price = data["eos"]["usd"]
+        bitcoin_cash_price = data["bitcoin-cash"]["usd"]
+        tron_price = data["tron"]["usd"]
+        iota_price = data["iota"]["usd"]
+        wrapped_bitcoin_price = data["wrapped-bitcoin"]["usd"]
+        
+        return {
+            "BTC": bitcoin_price,
+            "ETH": ethereum_price,
+            "BNB": binancecoin_price,
+            "USDT": tether_price,
+            "XRP": ripple_price,
+            "ADA": cardano_price,
+            "SOL": solana_price,
+            "DOT": polkadot_price,
+            "DOGE": dogecoin_price,
+            "LTC": litecoin_price,
+            "LINK": chainlink_price,
+            "USDC": usd_coin_price,
+            "XLM": stellar_price,
+            "VET": vechain_price,
+            "THETA": theta_token_price,
+            "EOS": eos_price,
+            "BCH": bitcoin_cash_price,
+            "TRX": tron_price,
+            "IOTA": iota_price,
+            "WBTC": wrapped_bitcoin_price
+        }
     else:
         print("Failed to fetch cryptocurrency prices")
         return None
+
 
 def main():
     btc = Cryptocurrency("BTC", "Bitcoin", 0)

@@ -1,0 +1,2 @@
+# CIP
+Crypto investment simulator

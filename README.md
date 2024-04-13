@@ -1,2 +1,1 @@
-# CIP
-Crypto investment simulator
+trying to create a simple program where users can simulate investing in cryptocurrencies and see how their investments would perform over time.

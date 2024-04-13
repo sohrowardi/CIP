@@ -30,61 +30,38 @@ class Portfolio:
         self.assets[cryptocurrency.symbol] -= amount
 
 def get_crypto_prices():
-    url = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,binancecoin,tether,ripple,cardano,solana,polkadot,dogecoin,litecoin,chainlink,usd-coin,stellar,vechain,theta-token,eos,bitcoin-cash,tron,iota,wrapped-bitcoin&vs_currencies=usd"
-    response = requests.get(url)
-    if response.status_code == 200:
+    url = "https://api.coingecko.com/api/v3/simple/price"
+    params = {
+        "ids": "bitcoin,ethereum,binancecoin,tether,ripple,cardano,solana,polkadot,dogecoin,litecoin,chainlink,usd-coin,stellar,vechain,theta-token,eos,bitcoin-cash,tron,iota,wrapped-bitcoin",
+        "vs_currencies": "usd"
+    }
+    try:
+        response = requests.get(url, params=params)
+        response.raise_for_status()  # Raise an exception for 4XX or 5XX status codes
         data = response.json()
-        bitcoin_price = data["bitcoin"]["usd"]
-        ethereum_price = data["ethereum"]["usd"]
-        binancecoin_price = data["binancecoin"]["usd"]
-        tether_price = data["tether"]["usd"]
-        ripple_price = data["ripple"]["usd"]
-        cardano_price = data["cardano"]["usd"]
-        solana_price = data["solana"]["usd"]
-        polkadot_price = data["polkadot"]["usd"]
-        dogecoin_price = data["dogecoin"]["usd"]
-        litecoin_price = data["litecoin"]["usd"]
-        chainlink_price = data["chainlink"]["usd"]
-        usd_coin_price = data["usd-coin"]["usd"]
-        stellar_price = data["stellar"]["usd"]
-        vechain_price = data["vechain"]["usd"]
-        theta_token_price = data["theta-token"]["usd"]
-        eos_price = data["eos"]["usd"]
-        bitcoin_cash_price = data["bitcoin-cash"]["usd"]
-        tron_price = data["tron"]["usd"]
-        iota_price = data["iota"]["usd"]
-        wrapped_bitcoin_price = data["wrapped-bitcoin"]["usd"]
-        
-        return {
-            "BTC": bitcoin_price,
-            "ETH": ethereum_price,
-            "BNB": binancecoin_price,
-            "USDT": tether_price,
-            "XRP": ripple_price,
-            "ADA": cardano_price,
-            "SOL": solana_price,
-            "DOT": polkadot_price,
-            "DOGE": dogecoin_price,
-            "LTC": litecoin_price,
-            "LINK": chainlink_price,
-            "USDC": usd_coin_price,
-            "XLM": stellar_price,
-            "VET": vechain_price,
-            "THETA": theta_token_price,
-            "EOS": eos_price,
-            "BCH": bitcoin_cash_price,
-            "TRX": tron_price,
-            "IOTA": iota_price,
-            "WBTC": wrapped_bitcoin_price
-        }
-    else:
-        print("Failed to fetch cryptocurrency prices")
+        prices = {}
+        for crypto_id, crypto_data in data.items():
+            prices[crypto_id.upper()] = crypto_data.get("usd", 0)
+        return prices
+    except requests.RequestException as e:
+        print("Error fetching cryptocurrency prices:", e)
         return None
+
+def parse_transaction(transaction):
+    parts = transaction.split()
+    if len(parts) < 3:
+        return None, None, None
+    action = parts[0].lower()
+    symbol = parts[1].upper()
+    amount_str = parts[2].replace('$', '')
+    try:
+        amount = float(amount_str)
+    except ValueError:
+        return None, None, None
+    return action, symbol, amount
 
 
 def main():
-    btc = Cryptocurrency("BTC", "Bitcoin", 0)
-    eth = Cryptocurrency("ETH", "Ethereum", 0)
     portfolio = Portfolio()
 
     while True:
@@ -92,33 +69,41 @@ def main():
         if prices is None:
             break
 
-        btc.price = prices["BTC"]
-        eth.price = prices["ETH"]
+        for symbol, price in prices.items():
+            # Update cryptocurrency prices
+            setattr(portfolio, symbol.lower(), Cryptocurrency(symbol, symbol.capitalize(), price))
 
-        print("Bitcoin Price:", btc.price)
-        print("Ethereum Price:", eth.price)
+        # Print cryptocurrency prices
+        for symbol, cryptocurrency in vars(portfolio).items():
+            if isinstance(cryptocurrency, Cryptocurrency):
+                print(f"{cryptocurrency.name} Price:", cryptocurrency.price)
 
         print("Balance:", portfolio.balance)
-        print("BTC:", portfolio.assets.get("BTC", 0))
-        print("ETH:", portfolio.assets.get("ETH", 0))
+        for symbol, amount in portfolio.assets.items():
+            print(f"{symbol}: {amount}")
 
-        action = input("Enter 'buy' or 'sell': ")
+        transaction = input("Enter transaction (e.g., 'buy bitcoin 100' or 'sell bitcoin 100$'): ").strip()
+        action, symbol, amount = parse_transaction(transaction)
         if action == "buy":
-            symbol = input("Enter cryptocurrency symbol (BTC/ETH): ")
-            amount = float(input("Enter amount to buy: "))
-            if symbol == "BTC":
-                portfolio.buy(btc, amount)
-            elif symbol == "ETH":
-                portfolio.buy(eth, amount)
+            cryptocurrency = getattr(portfolio, symbol.lower(), None)
+            if cryptocurrency:
+                if '$' in transaction:
+                    amount_in_dollars = amount
+                    amount = amount_in_dollars / cryptocurrency.price
+                portfolio.buy(cryptocurrency, amount)
+            else:
+                print("Invalid cryptocurrency symbol")
         elif action == "sell":
-            symbol = input("Enter cryptocurrency symbol (BTC/ETH): ")
-            amount = float(input("Enter amount to sell: "))
-            if symbol == "BTC":
-                portfolio.sell(btc, amount)
-            elif symbol == "ETH":
-                portfolio.sell(eth, amount)
+            cryptocurrency = getattr(portfolio, symbol.lower(), None)
+            if cryptocurrency:
+                if '$' in transaction:
+                    amount_in_dollars = amount
+                    amount = amount_in_dollars / cryptocurrency.price
+                portfolio.sell(cryptocurrency, amount)
+            else:
+                print("Invalid cryptocurrency symbol")
         else:
-            print("Invalid action")
+            print("Invalid transaction format")
 
 if __name__ == "__main__":
     main()
